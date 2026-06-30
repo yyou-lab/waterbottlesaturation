@@ -25,7 +25,7 @@
     box-shadow: 0 6px 32px rgba(0,0,0,0.09);
   }
 
-  /* ── Description (top) ── */
+  /* ── Description ── */
   .description {
     margin-bottom: 1.25rem;
     text-align: center;
@@ -33,11 +33,9 @@
     color: #444;
     line-height: 1.65;
   }
-
   .description strong {
     display: block;
     font-size: 0.65rem;
-    font-style: normal;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -55,7 +53,6 @@
     background: #fff;
     margin-bottom: 1.75rem;
   }
-
   .image-wrap img {
     position: absolute;
     inset: 0;
@@ -63,48 +60,44 @@
     height: 100%;
     object-fit: contain;
     opacity: 0;
+    transition: none;
   }
-
-  .image-wrap img.active {
-    opacity: 1;
-  }
+  /* z-index stacking: vivid on top, neutral middle, muted bottom */
+  #img-p50 { z-index: 3; }
+  #img-0   { z-index: 2; }
+  #img-n50 { z-index: 1; opacity: 1; }
 
   /* ── Slider ── */
-  .slider-section {
-    user-select: none;
-  }
+  .slider-section { user-select: none; }
 
   .slider-track-wrap {
     position: relative;
     height: 28px;
     cursor: pointer;
   }
-
   .slider-track {
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 28px;
     border-radius: 14px;
+    /* -50% (muted) → 0% (neutral) → +50% (vivid) */
     background: linear-gradient(
       to right,
-      #8fa6b6 0%,
-      #6ba0c8 25%,
-      #5badd4 50%,
-      #3d6fc7 75%,
-      #2b35c5 100%
+      #5e7485 0%,
+      #4f8bb0 50%,
+      #1a3f9a 100%
     );
   }
-
-  .tick {
+  /* center tick mark at 0% */
+  .tick-center {
     position: absolute;
-    top: 4px;
-    bottom: 4px;
+    top: 4px; bottom: 4px;
+    left: 50%;
     width: 1.5px;
-    background: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.5);
     transform: translateX(-50%);
     pointer-events: none;
   }
-
   .slider-dot {
     position: absolute;
     top: 50%;
@@ -118,27 +111,31 @@
     cursor: grab;
     z-index: 2;
   }
-
   .slider-dot:active { cursor: grabbing; }
 
-  /* ── Color labels ── */
+  /* ── Endpoint labels ── */
   .slider-labels {
     display: flex;
     justify-content: space-between;
     margin-top: 9px;
   }
-
   .slider-labels span {
     font-size: 0.62rem;
     color: #999;
     line-height: 1.3;
   }
 
-
+  /* ── Percentage readout ── */
+  .readout {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
 </style>
 </head>
 <body>
-
 <div class="card">
 
   <div class="description">
@@ -146,91 +143,85 @@
     You need a new water bottle. You'll use it every day — at work, at the gym, at the café. This is the one you're looking at. Which color do you go with?
   </div>
 
-  <!-- ── Images ── swap each src with your own photo ── -->
   <div class="image-wrap">
-    <img id="img-n50" class="placeholder-img"
-         src="bottle-n50.jpg"
-         alt="Very muted blue">
-    <img id="img-n25" class="placeholder-img"
-         src="bottle-n25.jpg"
-         alt="Muted blue">
-    <img id="img-0" class="placeholder-img active"
-         src="bottle-0.jpg"
-         alt="Blue">
-    <img id="img-p25" class="placeholder-img"
-         src="bottle-p25.jpg"
-         alt="Vivid blue">
-    <img id="img-p50" class="placeholder-img"
-         src="bottle-p50.jpg"
-         alt="Very vivid blue">
+    <!-- -50%: least saturated (muted) — stays as base layer -->
+    <img id="bottle-n50" src="images/bottle-n50.jpg" alt="Least saturated">
+    <!-- 0%: neutral — middle layer -->
+    <img id="bottle-0"   src="images/bottle-0.jpg"   alt="Neutral">
+    <!-- +50%: most vivid — top layer -->
+    <img id="bottle-p50" src="images/bottle-p50.jpg" alt="Most vivid">
   </div>
 
-  <!-- ── Slider ── -->
   <div class="slider-section">
     <div class="slider-track-wrap" id="track-wrap">
       <div class="slider-track"></div>
-      <div class="tick" style="left:0%"></div>
-      <div class="tick" style="left:25%"></div>
-      <div class="tick" style="left:50%"></div>
-      <div class="tick" style="left:75%"></div>
-      <div class="tick" style="left:100%"></div>
+      <div class="tick-center"></div>
       <div class="slider-dot" id="dot"></div>
     </div>
-
     <div class="slider-labels">
-      <span style="text-align:left">Less<br>saturated</span>
-      <span style="text-align:right">More<br>saturated</span>
+      <span>Less saturated<br>−50%</span>
+      <span>More saturated<br>+50%</span>
     </div>
   </div>
+
+  <div class="readout" id="readout">0%</div>
 
 </div>
 
 <script>
-  const POSITIONS = [
-    { pct: 0,   imgId: 'img-n50' },
-    { pct: 25,  imgId: 'img-n25' },
-    { pct: 50,  imgId: 'img-0'   },
-    { pct: 75,  imgId: 'img-p25' },
-    { pct: 100, imgId: 'img-p50' },
-  ];
+  // ── Color nodes for the swatch (not shown but used for accurate readout color matching)
+  // Slider range: -50 to +50, starting at 0 (center = 50% of track)
+  const imgN50  = document.getElementById('img-n50');
+  const img0    = document.getElementById('img-0');
+  const imgP50  = document.getElementById('img-p50');
+  const dot     = document.getElementById('dot');
+  const trackWrap = document.getElementById('track-wrap');
+  const readout = document.getElementById('readout');
 
-  let activeIndex = 2;
+  let currentVal = 0; // -50 to +50
 
-  const dot         = document.getElementById('dot');
-  const trackWrap   = document.getElementById('track-wrap');
-  const imgs        = document.querySelectorAll('.placeholder-img');
+  function update(val) {
+    currentVal = Math.max(-50, Math.min(50, val));
+    const pct = (currentVal + 50) / 100; // 0 at -50%, 0.5 at 0%, 1 at +50%
+    dot.style.left = (pct * 100) + '%';    const displayVal = Math.round(currentVal);
+    readout.textContent = (displayVal > 0 ? '+' : '') + displayVal + '%';
 
-  function snapToIndex(i) {
-    activeIndex = i;
-    dot.style.left = POSITIONS[i].pct + '%';
-    imgs.forEach(img => img.classList.remove('active'));
-    document.getElementById(POSITIONS[i].imgId).classList.add('active');
+    if (currentVal >= 0) {
+      // Blend between neutral (img-0) and vivid (img-p50)
+      const t = currentVal / 50; // 0 at val=0, 1 at val=+50
+      imgN50.style.opacity = 0;
+      img0.style.opacity   = 1;   // base layer always opaque
+      imgP50.style.opacity = t;   // top layer fades in
+    } else {
+      // Blend between muted (img-n50) and neutral (img-0)
+      const t = (currentVal + 50) / 50; // 0 at val=-50, 1 at val=0
+      imgN50.style.opacity = 1;   // base layer always opaque
+      img0.style.opacity   = t;   // top layer fades in
+      imgP50.style.opacity = 0;
+    }
   }
 
-  function nearestIndex(clientX) {
+  // ── Mouse drag ──────────────────────────────────────────────
+  function valFromClientX(clientX) {
     const rect = trackWrap.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const pct = ratio * 100;
-    let best = 0, bestDist = Infinity;
-    POSITIONS.forEach((p, i) => {
-      const d = Math.abs(p.pct - pct);
-      if (d < bestDist) { bestDist = d; best = i; }
-    });
-    return best;
+    return (ratio * 100) - 50;
   }
 
-  trackWrap.addEventListener('click', e => snapToIndex(nearestIndex(e.clientX)));
+  trackWrap.addEventListener('click', e => update(valFromClientX(e.clientX)));
 
   let dragging = false;
-  dot.addEventListener('mousedown',  e => { dragging = true; e.stopPropagation(); e.preventDefault(); });
-  document.addEventListener('mousemove', e => { if (dragging) snapToIndex(nearestIndex(e.clientX)); });
-  document.addEventListener('mouseup',   () => { dragging = false; });
+  dot.addEventListener('mousedown', e => { dragging = true; e.stopPropagation(); e.preventDefault(); });
+  document.addEventListener('mousemove', e => { if (dragging) update(valFromClientX(e.clientX)); });
+  document.addEventListener('mouseup', () => { dragging = false; });
 
+  // ── Touch drag ──────────────────────────────────────────────
   dot.addEventListener('touchstart', e => { dragging = true; e.stopPropagation(); e.preventDefault(); }, { passive: false });
-  document.addEventListener('touchmove', e => { if (dragging) snapToIndex(nearestIndex(e.touches[0].clientX)); }, { passive: false });
-  document.addEventListener('touchend',  () => { dragging = false; });
+  document.addEventListener('touchmove', e => { if (dragging) update(valFromClientX(e.touches[0].clientX)); }, { passive: false });
+  document.addEventListener('touchend', () => { dragging = false; });
 
-  snapToIndex(2);
+  // ── Init ────────────────────────────────────────────────────
+  update(0);
 </script>
 
 </body>
