@@ -63,9 +63,9 @@
     transition: none;
   }
   /* z-index stacking: vivid on top, neutral middle, muted bottom */
-  #img-p50 { z-index: 3; }
-  #img-0   { z-index: 2; }
-  #img-n50 { z-index: 1; opacity: 1; }
+  #bottle-p50 { z-index: 3; }
+  #bottle-0   { z-index: 2; }
+  #bottle-n50 { z-index: 1; opacity: 1; }
 
   /* ── Slider ── */
   .slider-section { user-select: none; }
@@ -171,9 +171,9 @@
 <script>
   // ── Color nodes for the swatch (not shown but used for accurate readout color matching)
   // Slider range: -50 to +50, starting at 0 (center = 50% of track)
-  const imgN50  = document.getElementById('img-n50');
-  const img0    = document.getElementById('img-0');
-  const imgP50  = document.getElementById('img-p50');
+  const imgN50  = document.getElementById('bottle-n50');
+  const img0    = document.getElementById('bottle-0');
+  const imgP50  = document.getElementById('bottle-p50');
   const dot     = document.getElementById('dot');
   const trackWrap = document.getElementById('track-wrap');
   const readout = document.getElementById('readout');
@@ -187,13 +187,13 @@
     readout.textContent = (displayVal > 0 ? '+' : '') + displayVal + '%';
 
     if (currentVal >= 0) {
-      // Blend between neutral (img-0) and vivid (img-p50)
+      // Blend between neutral (bottle-0) and vivid (bottle-p50)
       const t = currentVal / 50; // 0 at val=0, 1 at val=+50
       imgN50.style.opacity = 0;
       img0.style.opacity   = 1;   // base layer always opaque
       imgP50.style.opacity = t;   // top layer fades in
     } else {
-      // Blend between muted (img-n50) and neutral (img-0)
+      // Blend between muted (bottle-n50) and neutral (bottle-0)
       const t = (currentVal + 50) / 50; // 0 at val=-50, 1 at val=0
       imgN50.style.opacity = 1;   // base layer always opaque
       img0.style.opacity   = t;   // top layer fades in
